@@ -1,0 +1,16 @@
+# Large model files
+MDA_GAN/MDA_GAN-main/weights/
+MDA_GAN/MDA_GAN-main/network/
+MDA_GAN/MDA_GAN-main/data/
+MDA_GAN/MDA_GAN-main/results/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
