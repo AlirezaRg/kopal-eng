@@ -1,0 +1,73 @@
+================================================================
+        Project Changes — Seismic Inpainting
+================================================================
+
+----------------------------------------------------------------
+File: GUIversion2.py
+----------------------------------------------------------------
+
+1. Model path fix
+   - Before: hardcoded path to Desktop
+   - After:  relative path from the script location
+   mda_path = os.path.join(os.path.dirname(__file__), "..", "MDA_GAN", "MDA_GAN-main")
+
+2. Rectangle drawing fix (on_motion / on_release)
+   - Error "cannot remove artist" was fixed
+   - on_motion: clears all patches and redraws instead of calling rectangle.remove()
+   - on_release: no longer calls remove()
+
+3. Model float16 -> float32
+   - Problem: model with half precision freezes completely on CPU
+   - Fix: after loading the model, added:
+     model = model.float()
+
+4. Smart Crop
+   - Problem: fixed 128x128 crop caused the mask region to fall outside the processed area
+   - Fix: bounding box of the mask is calculated with 16 pixel padding
+     d0:d1, h0:h1, w0:w1  around the mask region
+   - Result: inference is both faster and more accurate
+
+5. Auto Slice after Reconstruction
+   - Problem: after finishing, the display slice was pointing to the wrong crossline
+   - Fix: slice automatically jumps to the center of the mask region
+     self.current_slice = int((w_idx[0] + w_idx[-1]) // 2)
+
+6. Compare Button (Before / After)
+   - Window 1: zoom into the mask region
+     - Original panel (zoomed)
+     - Reconstructed panel with PSNR
+     - Error Map panel
+   - Window 2: trace-by-trace comparison plot
+     - Blue  = original
+     - Red   = reconstructed by MDA GAN
+     - Shows MSE and PSNR values
+
+----------------------------------------------------------------
+New File: seismic_inpainting_pipeline.py
+----------------------------------------------------------------
+
+A complete CLI pipeline (no GUI) with these steps:
+
+   1. Data center = MDA_GAN folder (data + weights)
+   2. Load .npy or .segy seismic volume
+   3. Define damaged region (rectangle)
+   4. Reconstruct with pretrained MDA GAN model
+   5. Display 4 panels: Original / Damaged / Reconstructed / Error Map
+   6. Calculate MSE and PSNR
+
+   Settings at the top of the file:
+   INPUT_FILE          = file path (None = auto first file in data/)
+   DAMAGE_INLINE_START = start of damaged region
+   DAMAGE_INLINE_END   = end of damaged region
+   DISPLAY_CROSSLINE   = which crossline to display
+
+----------------------------------------------------------------
+Technical Notes
+----------------------------------------------------------------
+
+- Python 3.11 required (PyTorch does not support Python 3.13+)
+- Packages installed: torch, torchvision, matplotlib, PyQt5, numpy
+- Model: MDA_GAN.pt (TorchScript, float32 on CPU)
+- Default dataset: F3_salt.npy (128 x 384 x 384)
+
+================================================================
